@@ -1,0 +1,74 @@
+.admin-mobil {
+  padding: 40px 0;
+  min-height: calc(100vh - 80px);
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.mobil-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.mobil-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mobil-table thead {
+  background: #D8251D;
+  color: white;
+}
+
+.mobil-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.mobil-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mobil-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.text-center {
+  text-align: center;
+  color: #6b7280;
+  padding: 40px !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .mobil-table-container {
+    overflow-x: auto;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+}
+
+
+
