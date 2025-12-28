@@ -451,6 +451,12 @@ app.post('/api/promo/upload', upload.single('image'), (req, res) => {
 // GET semua promo
 app.get('/api/promo', async (req, res) => {
   try {
+    // Cek apakah model Promo tersedia
+    if (!db.Promo) {
+      console.error('Model Promo tidak ditemukan. Pastikan migration sudah dijalankan.');
+      return res.json([]); // Return empty array instead of error
+    }
+    
     const promos = await db.Promo.findAll({
       order: [['createdAt', 'DESC']]
     });
@@ -470,6 +476,15 @@ app.get('/api/promo', async (req, res) => {
     res.json(transformedPromos);
   } catch (error) {
     console.error('Error getting promo:', error);
+    
+    // Handle specific Sequelize errors
+    if (error.name === 'SequelizeDatabaseError') {
+      if (error.message.includes('relation') && error.message.includes('does not exist')) {
+        console.warn('Tabel Promos belum dibuat. Jalankan migration: npx sequelize-cli db:migrate');
+        return res.json([]); // Return empty array instead of error
+      }
+    }
+    
     res.status(500).json({ message: 'Gagal mengambil data promo', error: error.message });
   }
 });
@@ -503,23 +518,35 @@ app.post('/api/promo', async (req, res) => {
   try {
     const { judul, deskripsi, gambar, tanggalAwal, tanggalAkhir } = req.body;
     
-    if (!judul) {
+    console.log('POST /api/promo - Request body:', { judul, deskripsi, gambar, tanggalAwal, tanggalAkhir });
+    
+    if (!judul || judul.trim() === '') {
       return res.status(400).json({ message: 'Judul promo harus diisi' });
     }
     
-    if (!gambar) {
+    if (!gambar || gambar.trim() === '') {
       return res.status(400).json({ message: 'Gambar promo harus diupload' });
     }
     
+    // Cek apakah model Promo tersedia
+    if (!db.Promo) {
+      console.error('Model Promo tidak ditemukan. Pastikan migration sudah dijalankan.');
+      return res.status(500).json({ 
+        message: 'Model Promo tidak ditemukan. Pastikan migration sudah dijalankan: npx sequelize-cli db:migrate' 
+      });
+    }
+    
     const newPromo = await db.Promo.create({
-      judul,
-      deskripsi: deskripsi || null,
-      gambar,
+      judul: judul.trim(),
+      deskripsi: deskripsi ? deskripsi.trim() : null,
+      gambar: gambar.trim(),
       tanggal_awal: tanggalAwal || null,
       tanggal_akhir: tanggalAkhir || null
     });
     
     const promoData = newPromo.toJSON ? newPromo.toJSON() : newPromo;
+    console.log('Promo berhasil dibuat:', promoData);
+    
     res.status(201).json({
       id: promoData.id,
       judul: promoData.judul,
@@ -530,7 +557,27 @@ app.post('/api/promo', async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating promo:', error);
-    res.status(500).json({ message: 'Gagal menambah promo', error: error.message });
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    // Handle specific Sequelize errors
+    if (error.name === 'SequelizeDatabaseError') {
+      if (error.message.includes('relation') && error.message.includes('does not exist')) {
+        return res.status(500).json({ 
+          message: 'Tabel Promos belum dibuat. Jalankan migration: npx sequelize-cli db:migrate',
+          error: error.message 
+        });
+      }
+    }
+    
+    res.status(500).json({ 
+      message: 'Gagal menambah promo', 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

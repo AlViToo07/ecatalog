@@ -106,28 +106,44 @@ const AdminPromo = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validasi
+    if (!formData.judul || formData.judul.trim() === '') {
+      alert('Judul promo harus diisi');
+      return;
+    }
+    
+    if (!formData.gambar || formData.gambar.trim() === '') {
+      alert('Gambar promo harus diupload terlebih dahulu');
+      return;
+    }
+    
     try {
-      if (editingPromo) {
-        await axios.put(`/api/promo/${editingPromo.id}`, formData);
-      } else {
-        await axios.post('/api/promo', formData);
+      const response = editingPromo 
+        ? await axios.put(`/api/promo/${editingPromo.id}`, formData)
+        : await axios.post('/api/promo', formData);
+      
+      if (response.status === 201 || response.status === 200) {
+        setShowForm(false);
+        setEditingPromo(null);
+        setFormData({
+          judul: '',
+          deskripsi: '',
+          gambar: '',
+          tanggalAwal: '',
+          tanggalAkhir: ''
+        });
+        setSelectedImage(null);
+        fetchPromo();
+        // Trigger event untuk refresh navbar
+        window.dispatchEvent(new Event('promoUpdated'));
+        alert('Promo berhasil disimpan');
       }
-      setShowForm(false);
-      setEditingPromo(null);
-      setFormData({
-        judul: '',
-        deskripsi: '',
-        gambar: '',
-        tanggalAwal: '',
-        tanggalAkhir: ''
-      });
-      setSelectedImage(null);
-      fetchPromo();
-      // Trigger event untuk refresh navbar
-      window.dispatchEvent(new Event('promoUpdated'));
     } catch (error) {
       console.error('Error saving promo:', error);
-      alert('Gagal menyimpan promo');
+      const errorMessage = error.response?.data?.message || error.message || 'Gagal menyimpan promo';
+      const errorDetails = error.response?.data?.error;
+      alert(`${errorMessage}${errorDetails ? '\n\nDetail: ' + errorDetails : ''}`);
     }
   };
 

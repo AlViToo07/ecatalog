@@ -356,7 +356,7 @@
 }
 
 .price-table thead {
-  background: linear-gradient(135deg, #D8251D 0%, #b01f19 100%);
+  background: #D8251D;
   color: white;
 }
 
@@ -364,7 +364,7 @@
   padding: 15px 20px;
   text-align: left;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }

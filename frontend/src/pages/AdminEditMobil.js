@@ -25,10 +25,7 @@ const AdminEditMobil = () => {
   const [uploading, setUploading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [selectedImages, setSelectedImages] = useState([]);
-  const [manualHarga, setManualHarga] = useState('');
-  const [maticHarga, setMaticHarga] = useState('');
-  const [hasManual, setHasManual] = useState(false);
-  const [hasMatic, setHasMatic] = useState(false);
+  const [tipeHargaList, setTipeHargaList] = useState([{ tipe: '', harga: '' }]);
 
   useEffect(() => {
     const isAdmin = localStorage.getItem('adminLoggedIn') === 'true';
@@ -58,14 +55,15 @@ const AdminEditMobil = () => {
         }
       }
 
-      // Set transmisi checkboxes dan harga
-      const manual = transmisiHarga.find(t => t.type === 'Manual');
-      const matic = transmisiHarga.find(t => t.type === 'Automatic');
-      
-      setHasManual(!!manual);
-      setHasMatic(!!matic);
-      setManualHarga(manual && (manual.harga !== undefined && manual.harga !== null) ? manual.harga.toString() : '');
-      setMaticHarga(matic && (matic.harga !== undefined && matic.harga !== null) ? matic.harga.toString() : '');
+      // Set tipeHargaList dari transmisiHarga
+      if (transmisiHarga.length > 0) {
+        setTipeHargaList(transmisiHarga.map(item => ({
+          tipe: item.type || '',
+          harga: (item.harga !== undefined && item.harga !== null) ? item.harga.toString() : ''
+        })));
+      } else {
+        setTipeHargaList([{ tipe: '', harga: '' }]);
+      }
 
       // Handle gambar
       let gambar = mobil.gambar || [];
@@ -179,35 +177,42 @@ const AdminEditMobil = () => {
     }));
   };
 
-  const updateTransmisiHarga = () => {
-    const transmisiHarga = [];
-    if (hasManual && manualHarga && manualHarga.trim() !== '') {
-      const harga = parseInt(manualHarga);
-      if (!isNaN(harga) && harga > 0) {
-        transmisiHarga.push({ type: 'Manual', harga: harga });
-      }
+  const handleTipeHargaAdd = () => {
+    setTipeHargaList([...tipeHargaList, { tipe: '', harga: '' }]);
+  };
+
+  const handleTipeHargaRemove = (index) => {
+    if (tipeHargaList.length > 1) {
+      setTipeHargaList(tipeHargaList.filter((_, i) => i !== index));
     }
-    if (hasMatic && maticHarga && maticHarga.trim() !== '') {
-      const harga = parseInt(maticHarga);
-      if (!isNaN(harga) && harga > 0) {
-        transmisiHarga.push({ type: 'Automatic', harga: harga });
-      }
-    }
+  };
+
+  const handleTipeHargaChange = (index, field, value) => {
+    const updated = [...tipeHargaList];
+    updated[index][field] = value;
+    setTipeHargaList(updated);
+  };
+
+  useEffect(() => {
+    const transmisiHarga = tipeHargaList
+      .filter(item => item.tipe.trim() !== '' && item.harga.trim() !== '')
+      .map(item => ({
+        type: item.tipe.trim(),
+        harga: parseInt(item.harga) || 0
+      }))
+      .filter(item => item.harga > 0);
+    
     setFormData(prev => ({
       ...prev,
       transmisiHarga: transmisiHarga
     }));
-  };
-
-  useEffect(() => {
-    updateTransmisiHarga();
-  }, [hasManual, hasMatic, manualHarga, maticHarga]);
+  }, [tipeHargaList]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (formData.transmisiHarga.length === 0) {
-      alert('Pilih minimal satu transmisi dengan harga');
+      alert('Masukkan minimal satu tipe dengan harga');
       return;
     }
 
@@ -347,53 +352,66 @@ const AdminEditMobil = () => {
             </div>
           </div>
 
-          {/* Transmisi dengan Harga */}
-          <div className="input-group transmisi-section">
-            <label>Transmisi & Harga *</label>
-            <div className="transmisi-options">
-              <div className="transmisi-option">
-                <label className="checkbox-label">
+          {/* Tipe & Harga */}
+          <div className="input-group tipe-harga-section">
+            <label>Tipe & Harga *</label>
+            <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>
+              Masukkan deskripsi tipe dan harga untuk setiap varian mobil
+            </p>
+            {tipeHargaList.map((item, index) => (
+              <div key={index} className="tipe-harga-item" style={{ 
+                display: 'flex', 
+                gap: '15px', 
+                marginBottom: '15px',
+                alignItems: 'flex-end'
+              }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '600' }}>
+                    Deskripsi Tipe
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={hasManual}
-                    onChange={(e) => setHasManual(e.target.checked)}
+                    type="text"
+                    value={item.tipe}
+                    onChange={(e) => handleTipeHargaChange(index, 'tipe', e.target.value)}
+                    placeholder="Contoh: All New Avanza 1.3 G M/T"
+                    className="form-control"
+                    required
                   />
-                  <span>Manual</span>
-                </label>
-                {hasManual && (
-                  <input
-                    type="number"
-                    value={manualHarga}
-                    onChange={(e) => setManualHarga(e.target.value)}
-                    placeholder="Harga Manual (Rp)"
-                    required={hasManual}
-                    min="0"
-                    className="harga-input"
-                  />
-                )}
-              </div>
-              <div className="transmisi-option">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={hasMatic}
-                    onChange={(e) => setHasMatic(e.target.checked)}
-                  />
-                  <span>Automatic (Matic)</span>
-                </label>
-                {hasMatic && (
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '600' }}>
+                    Harga (Rp)
+                  </label>
                   <input
                     type="number"
-                    value={maticHarga}
-                    onChange={(e) => setMaticHarga(e.target.value)}
-                    placeholder="Harga Matic (Rp)"
-                    required={hasMatic}
+                    value={item.harga}
+                    onChange={(e) => handleTipeHargaChange(index, 'harga', e.target.value)}
+                    placeholder="Contoh: 200000000"
+                    className="form-control"
+                    required
                     min="0"
-                    className="harga-input"
                   />
+                </div>
+                {tipeHargaList.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleTipeHargaRemove(index)}
+                    className="btn btn-danger"
+                    style={{ padding: '10px 15px', minWidth: 'auto' }}
+                  >
+                    Hapus
+                  </button>
                 )}
               </div>
-            </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleTipeHargaAdd}
+              className="btn btn-secondary"
+              style={{ marginTop: '10px' }}
+            >
+              + Tambah Tipe & Harga
+            </button>
           </div>
 
           {/* Upload Gambar */}

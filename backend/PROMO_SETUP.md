@@ -103,3 +103,4 @@ npx sequelize-cli db:migrate
 - Cek apakah file ada di folder `backend/uploads/`
 - Pastikan endpoint `/uploads` dapat diakses
 
+

@@ -279,7 +279,7 @@ const DetailMobil = () => {
               <tbody>
                 {transmisiHarga.map((item, index) => (
                   <tr key={index}>
-                    <td>{mobil.model} {item.type}</td>
+                    <td>{item.type}</td>
                     <td className="price-cell">{formatRupiah(item.harga)}</td>
                   </tr>
                 ))}
